@@ -19,4 +19,5 @@ A deterministic finite automaton without accept states and without a starting st
 
 ## About this project:
 
-Implement a DFA engine using JavaScript. Use your prefer IDE and run the program, once the program is running go to your browser and use localhost:3000/dfa-engine.html. It will render a page with instruction on how to use it. There are also 4 set of automatic dfa generate strings for testing. 
+- Implement a DFA engine using JavaScript and Nodejs. Use your prefer IDE and run the program, once the program is running go to your browser and use localhost:3000/dfa-engine.html. It will render a page with instruction on how to use it. There are also 4 set of automatic dfa generate strings for testing. 
+- If the string not accept by the the dfa condition it will display rejected otherwise accepted. 
