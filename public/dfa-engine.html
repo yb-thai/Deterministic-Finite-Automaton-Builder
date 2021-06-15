@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DFA Engine</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        html {
+            font-family: sans-serif;
+        }
+
+        body {
+            width: 100%;
+            margin: 0 auto;
+            background-color: lightblue;
+
+        }
+        hr{
+            height: 1px;
+            background-color: black;
+        }
+
+        label{
+            width : 100px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        textarea{
+            padding: 6px;
+            display: inline-block;
+            width: 150px;
+            height: 90px;
+            border-radius: 7px;
+        }
+        input{
+            display: inline-block;
+            border-radius: 4px;
+        }
+        #headerTitle{
+            text-align: center;
+        }
+
+        section{
+            float: left;
+            margin: 25px 5% 0;
+        }
+        #submitString{
+            margin: 25px 0;
+        }
+        #definition{
+            background-color:#E1E1E1;
+            width: 800px;
+            border: 1px solid black;
+            padding: 10px;
+            margin: 20px 350px;
+        }
+
+       select{
+           display: inline-block;
+           border-radius: 4px;
+           width: 150px;
+           height: 30px;
+           margin-left: 4px;
+       }
+
+       #validateOutput{
+           display: inline-block;
+           float: bottom;
+           font-size:40px;
+       }
+       #instructionList{
+           width:600px;
+           height:400px;
+           background-color:#E1E1E1;
+           position: absolute;
+           top:190px;
+           right:100px;
+           display: inline-block;
+       }
+       ul{
+           line-height: 1.7;
+       }
+
+
+
+
+
+    </style>
+
+
+    <script type="text/javascript" >
+
+        // constructor for states
+        class constructState {
+            constructor(start, final, name) {
+                this.start = start;
+                this.final = final;
+                this.name = name;
+            }
+        }
+        // constructor for DFA
+        class constructDFA {
+            stringValidateOutput = document.getElementById("validateOutput");
+            constructor(alphabet) {
+                this.sigma = alphabet;
+                this.transitions = {};
+                this.states = {};
+                this.rejected = 0;
+
+                this.currentState = null;
+            }
+
+            // create new state
+            addState(start, final, name) {
+                if(!this.states[name]) {
+                    this.states[name] = new constructState(start, final, name);
+                } else {
+                     alert("State Already Exists.");
+                    this.stringValidateOutput.innerHTML ="";
+                }
+            }
+
+            // create transition for each state
+            addTransition(currentState, inputSymbol, nextState) {
+                if(!this.transitions[inputSymbol]) {
+                    this.transitions[inputSymbol] = [];
+                }
+                this.transitions[inputSymbol].push([currentState, inputSymbol, nextState]);
+            }
+
+            // retrieve starting state
+            getStartingState() {
+
+                for(let state in this.states) {
+                    if(this.states[state].start == 1) {
+                        return this.states[state];
+                    }
+                }
+            }
+            // retrieve the final state
+            getFinalStates() {
+
+                let finalStates = [];
+                for(let state in this.states) {
+                    if(this.states[state].final == 1) {
+                        finalStates.push(this.states[state].name);
+                    }
+                }
+                return finalStates;
+            }
+            // retrieve all the transitions
+            getTransition(partialTransition) {
+
+                let symbol = partialTransition[1];
+                let currentState = partialTransition[0];
+                let relevantTransitions = [];
+
+                for(let i = 0; i < this.transitions[symbol].length; i++) {
+                    if(this.transitions[symbol][i][0] === currentState) {
+                        relevantTransitions.push(this.transitions[symbol][i]);
+                    }
+                }
+
+                if(relevantTransitions.length != 0) {
+                    this.currentState = this.states[relevantTransitions[0][2]];
+                } else {
+                    this.currentState = this.states[currentState];
+                    this.rejected = 1;
+                }
+            }
+
+            // validate the string if it belong to the grammar or not
+            stringValidation(string) {
+                let set = new Set(string);
+                for(let i = 0; i < [...set].length; i++) {
+                    if(!this.sigma.includes([...set][i])) {
+                        alert("Input String is not part of the Alphabet");
+                        this.stringValidateOutput.innerHTML = "";
+                        return null;
+                    }
+                }
+
+                this.rejected = 0;
+                let startState = this.getStartingState();
+                let finalStates = this.getFinalStates();
+
+                this.currentState = startState;
+                let stringArray = [...string];
+                for(let i = 0; i < stringArray.length; i++) {
+                    if(this.rejected != 1) {
+                        this.getTransition([this.currentState.name, stringArray[i]]);
+                    }
+                    else {
+                        this.stringValidateOutput.innerHTML = "<span style='color: red'>Reject!</span>  The string is not accepted by the DFA.";
+                        return null;
+                    }
+                }
+
+                if(finalStates.includes(this.currentState.name)) {
+                    // use div display later after testing
+                    this.stringValidateOutput.innerHTML = "<span style='color: green'>Accept!</span>  The string accepted by the DFA.";
+                } else {
+                    this.stringValidateOutput.innerHTML = "<span style='color: red'>Reject!</span>  The string is not accepted by the DFA.";
+                }
+            }
+        }
+
+
+            let inputSigmaText = "";
+            let inputStateText = "";
+            let inputInitialState = "";
+            let inputFinishState = "";
+            let inputDeltaText = "";
+            let inputStringText = "";
+
+        // function called when button press
+        function generateResult(){
+            inputSigmaText = document.getElementById("sigmaField").value;
+            inputStateText = document.getElementById("qField").value;
+            inputInitialState = document.getElementById("initialStateField").value;
+            inputFinishState = document.getElementById("finalField").value;
+            inputDeltaText = document.getElementById("deltaField").value;
+            inputStringText = document.getElementById("stringField").value;
+
+            if(inputStringText === ""  || inputStateText === "" || inputInitialState === "" || inputFinishState === "" ||
+                inputDeltaText === "" || inputStateText === ""){
+                alert("please fill all the input in the boxes.");
+            } else {
+
+                // get value from sigma and split into temp array
+                let inputSigmaArray;
+                inputSigmaArray = inputSigmaText.split(',');
+                let dfa = new constructDFA(inputSigmaArray);
+
+                // get all the states input
+                let inputStateArray;
+                inputStateArray = inputStateText.split(',');
+                for (let i = 0; i < inputStateArray.length; i++) {
+                    let start = inputStateArray[i] == inputInitialState;
+                    let end = inputStateArray[i] == inputFinishState;
+                    dfa.addState(start, end, inputStateArray[i]);
+
+                }
+
+                //get value from delta array
+                let inputDeltaArray;
+                inputDeltaArray = inputDeltaText.split(/\r?\n/);
+                for (let i = 0; i < inputDeltaArray.length; i++) {
+                    let tempString = inputDeltaArray[i];
+                    let tempArray = [];
+                    tempArray = tempString.split(':');
+                    for (let j = 0; j < tempArray.length; j++) {
+                        let theCurrentState = tempArray[0];
+                        let inputSymbol = tempArray[1];
+                        let theNextState = tempArray[2];
+                        dfa.addTransition(theCurrentState, inputSymbol, theNextState);
+                    }
+
+                }
+                //get string input and validate
+                dfa.stringValidation(inputStringText);
+
+               // drawGraph(dfa);
+            }
+
+        }
+        // generate random automaton
+        function generateInput(){
+            let option = document.getElementById("dfaGenerate").value;
+            if(option == 1 ){
+                document.getElementById("sigmaField").value = "a,b";
+                document.getElementById("qField").value = "q0,q1,q2";
+                document.getElementById("initialStateField").value = "q0";
+                document.getElementById("finalField").value = "q2";
+                document.getElementById("deltaField").value= "q0:a:q1\nq0:b:q0\nq1:a:q2\nq1:b:q1\nq2:a:q2\nq2:b:q2";
+                document.getElementById("stringField").value = "aaab";
+
+            } else if(option == 2){
+                document.getElementById("sigmaField").value = "a,b,c";
+                document.getElementById("qField").value = "q0,q1,q2,q3";
+                document.getElementById("initialStateField").value = "q0";
+                document.getElementById("finalField").value = "q2";
+                document.getElementById("deltaField").value= "q0:a:q1\nq0:b:q0\nq0:c:q0\nq1:a:q2\nq1:b:q1\nq1:c:q1\nq2:a:q3\nq2:b:q3\nq2:c:q3\nq3:a:q3\nq3:c:q2\nq3:b:q3";
+                document.getElementById("stringField").value = "aabbcbc";
+
+            } else if(option == 3){
+                document.getElementById("sigmaField").value = "0,1";
+                document.getElementById("qField").value = "q0,q1,q2";
+                document.getElementById("initialStateField").value = "q0";
+                document.getElementById("finalField").value = "q2";
+                document.getElementById("deltaField").value= "q0:0:q1\nq0:1:q0\nq1:1:q2\nq1:0:q1\nq2:1:q2\nq2:0:q2";
+                document.getElementById("stringField").value = "100101";
+
+            } else if(option == 4){
+                document.getElementById("sigmaField").value = "a,b,c";
+                document.getElementById("qField").value = "q0,q1,q2,q3";
+                document.getElementById("initialStateField").value = "q0";
+                document.getElementById("finalField").value = "q3";
+                document.getElementById("deltaField").value= "q0:a:q1\nq0:b:q0\nq0:c:q0\nq1:a:q2\nq1:b:q1\nq1:c:q1\nq2:a:q3\nq2:b:q3\nq2:c:q3\nq3:a:q3\nq3:c:q2\nq3:b:q3";
+                document.getElementById("stringField").value = "aabbcbdd";
+
+            }
+        }
+
+
+
+
+    </script>
+
+
+</head>
+
+<body>
+
+<div id="headerTitle">
+    <h1>Deterministic Finite Automaton Builder</h1>
+    <hr>
+
+    <div id="definition"><span style="color: red">*Note</span>:       A valid DFA contains states, symbols, and transition, the initial state and the accepting states.</div>
+
+</div>
+<section>
+    <div class="form" id="qFieldBox" >
+        <label for="qField">Q(State): </label>
+        <input type = "text" id = "qField" class = "qField" placeholder ="q0,q1,q2">
+
+    </div>
+
+    <div class="form" id="sigmaFieldBox">
+        <label for="sigmaField">Sigma: </label>
+        <input type = "text" id = "sigmaField" class = "sigmaField" placeholder ="a,b,c">
+    </div>
+
+    <div class="form" id="deltaFieldBox">
+            <label for="deltaField">Delta: </label>
+        <textarea type = "text" id= deltaField class = "deltaField" placeholder="q0:a:q1" oninput='this.style.height = "";this.style.height = this.scrollHeight + 3 +  "px"'></textarea>
+        </div>
+
+    <div class="form" id="initialStateFieldBox">
+        <label for="initialStateField">Initial State: </label>
+        <input type = "text" id = "initialStateField" class = "initialStateField" placeholder ="q0">
+    </div>
+    <div class="form" id="finalFieldBox">
+        <label for="finalField">Final State: </label>
+        <input type = "text" id = "finalField" class = "finalField" placeholder ="q4">
+    </div>
+    <div class="form" id="inputStringFieldBox">
+        <label for="stringField">Input String: </label>
+        <input type = "text" id = "stringField" class = "stringField" placeholder ="aaab">
+    </div>
+
+        <label for="dfaGenerate">Generate Input:</label><select name="dfaGenerate" id="dfaGenerate">
+            <option value="1">Option 1</option>
+            <option value="2">Option 2</option>
+            <option value="3">Option 3</option>
+            <option value="4">Option 4</option>
+        </select>
+        <br><br>
+    <input type = "submit" value = "Validate String"
+           class = "Submit" id = "submitString" onclick="generateResult()">
+        <input type = "submit" value = "Generate"
+               class = "Submit" id = "generateInput" onclick="generateInput()">
+        <br><br>
+
+        <div id="validateOutput">
+
+        </div>
+
+
+    <div id="instructionList">
+            <h4 style="text-align: center"><u>Instruction:</u></h4>
+            <ul>
+                <li>Q: {q0,q1,...} Q is a finite set of states.</li>
+                <li>Sigma: {a,b,...} Sigma is a finite set of input symbols called alphabet.</li>
+                <li>Delta: {q0:a:q1,...} Delta is a transition function (Current_State:Symbol:Next_State).</li>
+                <li>Initial State: {q0} Initial State or Start State need to belong to Q(state) set.</li>
+                <li>Final State:{q1} Final State or Accept State need to belong to Q(state) set.</li>
+                <li>User need to provide string input and press Validate String button to check if the string accept or reject by the machine.</li>
+            </ul>
+            <h4 style="text-align: center"><u>Generate DFA machine:</u></h4>
+            <ul>
+                <li>There are 4 options of DFA machine for user to select from.</li>
+                <li>After select an option, User can press generate button to generate a DFA machine.</li>
+                <li>User may change the input as desire.</li>
+                <li>Once the machine generated the user need to press validate button to check the result</li>
+            </ul>
+    </div>
+
+
+</section>
+<!--<canvas id="dfaCanvas" width="800" height="500" style="border:1px solid #000000;">-->
+
+<!--</canvas>-->
+
+
+
+
+
+</body>
+
+
+</html>
